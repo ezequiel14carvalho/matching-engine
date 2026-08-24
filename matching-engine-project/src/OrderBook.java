@@ -32,9 +32,40 @@ public class OrderBook {
         bookSide.get(order.getPrice()).add(order);
 
         // Remoção de alguma ordem
-        public void removeOrder(String orderId) {
-            Order order = oderMap.remove(orderId);
+    }
 
+
+    public void removeOrder(String orderId) {
+        Order order = orderMap.remove(orderId);
+
+        if (order != null) {
+            // Analisa o Side e pega a fila de ordens
+            TreeMap<Double, Queue<Order>> bookSide = (order.getSide() == Order.Side.BUY) ? bids : asks;
+            Queue<Order> priceQueue = bookSide.get(order.getPrice());
+
+            if (priceQueue != null) {
+                // Remove a ordem da fila
+                priceQueue.remove(order);
+                // Se a fila daquele nível de preço ficar vazia, removemos o preço do livro
+                if (priceQueue.isEmpty()) {
+                    bookSide.remove(order.getPrice());
+                }
+            }
         }
+    }
+
+    // Getters para a Matching Engine acessar o estado do livro
+    public TreeMap<Double, Queue<Order>> getBids() { return bids; }
+    public TreeMap<Double, Queue<Order>> getAsks() { return asks; }
+    public Order getOrderById(String id) { return orderMap.get(id); }
+
+    // Requisito adicional 1:  Implementar uma função/metodo para visualização do livro
+    public void printBook() {
+        System.out.println("Ordens de Compra    | Ordens de Venda");
+        System.out.println("--------------------|-----------------");
+
+        // O keySet().iterator() pega os preços na ordem que configuramos (Bids descrente, Asks crescente).
+        Iterator<Double> bidIterator = bids.keySet().iterator();
+        Iterator<Double> askIterator = asks.keySet().iterator();
     }
 }
