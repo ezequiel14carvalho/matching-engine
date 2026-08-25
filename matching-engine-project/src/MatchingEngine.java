@@ -63,6 +63,29 @@ public class MatchingEngine {
             executeMatch(order, queue, bestPrice);
             if (queue.isEmpty()) orderBook.getBids().remove(bestPrice);
         }
+
     }
 
+    private void matchLimit(Order order) {
+        if (order.getSide() == Order.Side.BUY) {
+            while (order.getQuantity() > 0 && !orderBook.getAsks().isEmpty() && order.getPrice() >= orderBook.getAsks().firstKey()) {
+                // Daqui em diante segue a mesma lógica do matchMarket
+                double bestPrice = orderBook.getBids().firstKey();
+                Queue<Order> queue = orderBook.getBids().get(bestPrice);
+                executeMatch(order, queue, bestPrice);
+                if (queue.isEmpty()) orderBook.getBids().remove(bestPrice);
+            }
+        } else {
+            while (order.getQuantity() > 0 && !orderBook.getBids().isEmpty() && order.getPrice() <= orderBook.getBids().firstKey()) {
+                double bestPrice = orderBook.getBids().firstKey();
+                Queue<Order> queue = orderBook.getBids().get(bestPrice);
+                executeMatch(order, queue, bestPrice);
+                if (queue.isEmpty()) orderBook.getBids().remove(bestPrice);
+            }
+        }
+
+        // Caso a Order não conseguir um match, adicionamos ao nosso orderBook
+        if (order.getQuantity() > 0) orderBook.addOrder(order);
+    }
 }
+
