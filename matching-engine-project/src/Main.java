@@ -1,6 +1,6 @@
 public class Main {
     public static void main(String[] args) {
-        System.out.println("=========== Teste ===========");
+        System.out.println("=========== Teste ===========\n");
 
         OrderBook orderBook = new OrderBook();
 
@@ -12,6 +12,10 @@ public class Main {
         orderBook.addOrder(buy2);
         orderBook.addOrder(sell1);
 
+        orderBook.printBook();
+
+        orderBook.removeOrder("ord_2");
+        System.out.println();
         orderBook.printBook();
     }
 }
