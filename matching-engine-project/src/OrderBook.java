@@ -59,6 +59,7 @@ public class OrderBook {
     public TreeMap<Double, Queue<Order>> getAsks() { return asks; }
     public Order getOrderById(String id) { return orderMap.get(id); }
 
+
     // Requisito adicional 1:  Implementar uma função/metodo para visualização do livro
     public void printBook() {
         System.out.println("Ordens de Compra    | Ordens de Venda");
@@ -67,5 +68,43 @@ public class OrderBook {
         // O keySet().iterator() pega os preços na ordem que configuramos (Bids descrente, Asks crescente).
         Iterator<Double> bidIterator = bids.keySet().iterator();
         Iterator<Double> askIterator = asks.keySet().iterator();
+
+        while (bidIterator.hasNext() | askIterator.hasNext()) {
+            String bidString = "";
+            String askString = "";
+
+            if (bidIterator.hasNext()) {
+                double price = bidIterator.next();
+                int totalQty = getTotalQuantity(bids.get(price));
+
+                // String.format nos garante alinhamento
+                bidString = String.format("%-20s", totalQty + " @ " + price);
+            } else {
+                // Espaço em branco se não tiver mais bids
+                bidString = String.format("%-20s", "");
+            }
+
+            if (askIterator.hasNext()) {
+                double price = askIterator.next();
+                int totalQty = getTotalQuantity(asks.get(price));
+
+                // Note que como ele está a diretia, não precisa de formatação
+                askString = totalQty + " @ " + price;
+            }
+
+            System.out.println(bidString + "| " + askString);
+        }
+    }
+
+    // metodo auxiliar que pega o total das quantidades em uma ordem nomesmo nivel de preço
+    private int getTotalQuantity(Queue<Order> priceQueue) {
+        if (priceQueue == null) {
+            return 0;
+        }
+        int total = 0;
+        for (Order order : priceQueue) {
+            total += order.getQuantity();
+        }
+        return total;
     }
 }
