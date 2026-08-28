@@ -96,6 +96,33 @@ public class OrderBook {
         }
     }
 
+    // Requisito adicional 3: Podemos reutilizar a removeOrder
+    public void cancelOrder(String id) {
+        Order order = orderMap.get(id);
+        if (order != null) {
+            removeOrder(id);
+            System.out.println("Order cancelled");
+        } else {
+            System.out.println("Order not found");
+        }
+    }
+
+    // Requesito adicional 4: Removemos a ordem, e adicionamos ela com as modificações
+    public void modifyOrder(String id, double newPrice, int newQty, MatchingEngine engine) {
+        Order order = orderMap.get(id);
+        if (order != null) {
+            removeOrder(id);
+
+            order.setPrice(newPrice);
+            order.setQuantity(newQty);
+
+            engine.processOrder(order);
+            System.out.println("Order modified");
+        } else {
+            System.out.println("Order not found");
+        }
+    }
+
     // metodo auxiliar que pega o total das quantidades em uma ordem nomesmo nivel de preço
     private int getTotalQuantity(Queue<Order> priceQueue) {
         if (priceQueue == null) {
