@@ -1,7 +1,7 @@
 import java.util.*;
 
 public class OrderBook {
-    // Compras: Ordenadas do maior para o menor (a inversão é feita no contructor)
+    // Compras: Ordenadas do maior para o menor (a inversão é feita no constructor)
     private TreeMap<Double, Queue<Order>> bids;
 
     // Vendas: Ordenadas do menor para o maior
@@ -10,10 +10,13 @@ public class OrderBook {
     // HashMap garante buscas rápidas de ordens O(1)
     private HashMap<String, Order> orderMap;
 
+    private List<Order> peggedOrders;
+
     public OrderBook() {
         this.bids = new TreeMap<>(Collections.reverseOrder());
         this.asks = new TreeMap<>();
         this.orderMap = new HashMap<>();
+        this.peggedOrders = new ArrayList<>();
     }
 
     // Insere a ordem no orderMap (para cancelamento/alteração rápidos)
@@ -22,23 +25,37 @@ public class OrderBook {
         // Salva no mapa para acesso O(1)
         orderMap.put(order.getId(), order);
 
+        // Se for ordem Pegged, inicializa o preço com o topo atual do livro
+        if (order.isPegged()) {
+            peggedOrders.add(order);
+            if (order.getSide() == Order.Side.BUY && !bids.isEmpty()) {
+                order.setPrice(bids.firstKey());
+            } else if (order.getSide() == Order.Side.SELL && !asks.isEmpty()) {
+                order.setPrice(asks.firstKey());
+            } else {
+                order.setPrice(0.0);
+            }
+        }
+
         // Analisa a ordem e coloca no respectivo Side
         TreeMap<Double, Queue<Order>> bookSide = (order.getSide() == Order.Side.BUY) ? bids : asks;
 
-        // Se a fila do preço não existir, cria uma nova fila com esse preço novo vaia.
+        // Se a fila do preço não existir, cria uma nova fila com esse preço novo vazia.
         bookSide.putIfAbsent(order.getPrice(), new LinkedList<>());
 
         // Adiciona a ordem no final da sua respectiva fila, para garantir prioridade de tempo
         bookSide.get(order.getPrice()).add(order);
-
-        // Remoção de alguma ordem
     }
 
-
+    // Remoção de alguma ordem
     public void removeOrder(String orderId) {
         Order order = orderMap.remove(orderId);
 
         if (order != null) {
+            if (order.isPegged()) {
+                peggedOrders.remove(order);
+            }
+
             // Analisa o Side e pega a fila de ordens
             TreeMap<Double, Queue<Order>> bookSide = (order.getSide() == Order.Side.BUY) ? bids : asks;
             Queue<Order> priceQueue = bookSide.get(order.getPrice());
@@ -59,17 +76,16 @@ public class OrderBook {
     public TreeMap<Double, Queue<Order>> getAsks() { return asks; }
     public Order getOrderById(String id) { return orderMap.get(id); }
 
-
-    // Requisito adicional 1:  Implementar uma função/metodo para visualização do livro
+    // Requisito adicional 1: Implementar uma função/metodo para visualização do livro
     public void printBook() {
         System.out.println("Ordens de Compra    | Ordens de Venda");
         System.out.println("--------------------|-----------------");
 
-        // O keySet().iterator() pega os preços na ordem que configuramos (Bids descrente, Asks crescente).
+        // O keySet().iterator() pega os preços na ordem que configuramos (Bids decrescente, Asks crescente).
         Iterator<Double> bidIterator = bids.keySet().iterator();
         Iterator<Double> askIterator = asks.keySet().iterator();
 
-        while (bidIterator.hasNext() | askIterator.hasNext()) {
+        while (bidIterator.hasNext() || askIterator.hasNext()) {
             String bidString = "";
             String askString = "";
 
@@ -88,7 +104,6 @@ public class OrderBook {
                 double price = askIterator.next();
                 int totalQty = getTotalQuantity(asks.get(price));
 
-                // Note que como ele está a diretia, não precisa de formatação
                 askString = totalQty + " @ " + price;
             }
 
@@ -107,7 +122,7 @@ public class OrderBook {
         }
     }
 
-    // Requesito adicional 4: Removemos a ordem, e adicionamos ela com as modificações
+    // Requisito adicional 4: Removemos a ordem, e adicionamos ela com as modificações
     public void modifyOrder(String id, double newPrice, int newQty, MatchingEngine engine) {
         Order order = orderMap.get(id);
         if (order != null) {
@@ -123,7 +138,28 @@ public class OrderBook {
         }
     }
 
-    // metodo auxiliar que pega o total das quantidades em uma ordem nomesmo nivel de preço
+    // Requisito 5: Atualiza o preço das ordens Pegged automaticamente quando o topo do livro muda
+    public void updatePeggedPrices() {
+        for (Order pOrder : new ArrayList<>(peggedOrders)) {
+            if (pOrder.getSide() == Order.Side.BUY && !bids.isEmpty()) {
+                double bestBid = bids.firstKey();
+                if (pOrder.getPrice() != bestBid) {
+                    removeOrder(pOrder.getId());
+                    pOrder.setPrice(bestBid);
+                    addOrder(pOrder);
+                }
+            } else if (pOrder.getSide() == Order.Side.SELL && !asks.isEmpty()) {
+                double bestAsk = asks.firstKey();
+                if (pOrder.getPrice() != bestAsk) {
+                    removeOrder(pOrder.getId());
+                    pOrder.setPrice(bestAsk);
+                    addOrder(pOrder);
+                }
+            }
+        }
+    }
+
+    // metodo auxiliar que pega o total das quantidades em uma ordem no mesmo nivel de preço
     private int getTotalQuantity(Queue<Order> priceQueue) {
         if (priceQueue == null) {
             return 0;
