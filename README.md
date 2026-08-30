@@ -28,15 +28,6 @@ Para atender ao requisito de eficiência de algoritmos (com complexidade otimiza
 
 ---
 
-Estrutura de arquivos
-
-├── Order.java          # Entidades, Enums (Side, Type) e propriedades da Ordem
-├── OrderBook.java      # Gerenciamento do livro de ofertas, TreeMap, HashMap e lógica Pegged
-├── MatchingEngine.java # Regras de negócio, cruzamento (Matching) e execução de trades
-└── Main.java           # Cenários de teste integrados cobrindo todos os requisitos
-
----
-
 ## 🛠️ Como Compilar e Rodar
 
 Certifique-se de ter o **JDK (Java Development Kit)** instalado em sua máquina.
